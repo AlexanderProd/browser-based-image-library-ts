@@ -2,12 +2,16 @@ import {
   Model,
   DataTypes,
   ForeignKey,
+  NonAttribute,
   InferAttributes,
   InferCreationAttributes,
   HasManyAddAssociationMixin,
+  HasManyAddAssociationsMixin,
   HasManyGetAssociationsMixin,
-  NonAttribute,
+  HasManyRemoveAssociationMixin,
+  HasManyRemoveAssociationsMixin,
 } from 'sequelize';
+import { fileNameFromPath } from '../utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import sequelize from '.';
@@ -22,8 +26,19 @@ class File extends Model<InferAttributes<File>, InferCreationAttributes<File>> {
   declare parent: ForeignKey<File['id']>;
   declare type: 'folder' | 'file';
 
-  declare addParent: HasManyAddAssociationMixin<File, string>;
-  declare getChildren: HasManyGetAssociationsMixin<File>;
+  declare getFiles: HasManyGetAssociationsMixin<File>;
+
+  declare getTags: HasManyGetAssociationsMixin<Tag>;
+  declare addTag: HasManyAddAssociationMixin<Tag, number>;
+  declare addTags: HasManyAddAssociationsMixin<Tag, number>;
+  declare removeTag: HasManyRemoveAssociationMixin<Tag, number>;
+  declare removeTags: HasManyRemoveAssociationsMixin<Tag, number>;
+
+  declare Tags?: NonAttribute<Tag[]>;
+
+  get fileName(): NonAttribute<string> {
+    return fileNameFromPath(this.path);
+  }
 }
 
 File.init(
@@ -57,7 +72,5 @@ File.init(
     tableName: 'files',
   }
 );
-
-File.hasMany(Tag);
 
 export default File;

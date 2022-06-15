@@ -1,11 +1,14 @@
 import {
   Model,
   DataTypes,
+  NonAttribute,
   InferAttributes,
+  CreationOptional,
   InferCreationAttributes,
   HasManyAddAssociationMixin,
   HasManyGetAssociationsMixin,
 } from 'sequelize';
+import { v4 as uuidv4 } from 'uuid';
 
 import sequelize from '.';
 import File from './File';
@@ -14,12 +17,14 @@ import File from './File';
 class Tag extends Model<InferAttributes<Tag>, InferCreationAttributes<Tag>> {
   // 'CreationOptional' is a special type that marks the field as optional
   // when creating an instance of the model (such as using Model.create()).
-  declare id: string;
+  declare id: CreationOptional<string>;
   declare name: string;
-  declare color: string;
+  declare color: string | null;
 
   declare addParent: HasManyAddAssociationMixin<File, string>;
   declare getChildren: HasManyGetAssociationsMixin<File>;
+
+  declare files?: NonAttribute<File[]>;
 }
 
 Tag.init(
@@ -27,6 +32,7 @@ Tag.init(
     id: {
       type: DataTypes.UUIDV4,
       primaryKey: true,
+      defaultValue: uuidv4,
     },
     name: {
       type: DataTypes.STRING,
@@ -35,7 +41,7 @@ Tag.init(
     },
     color: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
   },
   {
@@ -43,7 +49,5 @@ Tag.init(
     tableName: 'tags',
   }
 );
-
-Tag.hasMany(File);
 
 export default Tag;

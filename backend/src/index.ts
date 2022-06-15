@@ -2,14 +2,14 @@ import { resolve } from 'path';
 import { readdir } from 'fs/promises';
 import express from 'express';
 
-import { fileHash } from './utils';
+import { fileHash, matchInArray } from './utils';
 import sequelize from './sql';
+import './sql/associations';
 import File from './sql/File';
 
 const PORT = 3333;
 const ROOT_DIR = process.argv[2];
-const INCLUDED_FILETYPES =
-  /([a-zA-Z0-9\s_\\.\-\(\):])+(.jpg|.jpeg|.png|.bmp)$/i;
+const INCLUDED_FILETYPES = ['.png', '.jpg', '.jpeg', '.bmp'];
 
 async function main() {
   if (!ROOT_DIR) {
@@ -18,7 +18,7 @@ async function main() {
   }
 
   const app = express();
-  await sequelize.sync({ alter: true });
+  await sequelize.sync({ alter: false });
 
   async function* getFiles(dirPath: string, parentId: string): any {
     const dirEntries = await readdir(dirPath, { withFileTypes: true });
@@ -39,12 +39,13 @@ async function main() {
   }
 
   for await (const { path, dirId } of getFiles(ROOT_DIR, 'ROOT_DIR')) {
+    if (!matchInArray(path, INCLUDED_FILETYPES)) continue;
+
     const hash = await fileHash(path);
-    const [file] = await File.findOrCreate({
+    await File.findOrCreate({
       where: { id: hash },
       defaults: { id: hash, type: 'file', path, parent: dirId },
     });
-    //file.addParent(parentId);
   }
 
   app.use('/static', express.static(ROOT_DIR));
