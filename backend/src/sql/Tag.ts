@@ -3,12 +3,17 @@ import {
   DataTypes,
   NonAttribute,
   InferAttributes,
-  CreationOptional,
   InferCreationAttributes,
+  HasManyHasAssociationMixin,
   HasManyAddAssociationMixin,
   HasManyGetAssociationsMixin,
+  HasManyAddAssociationsMixin,
+  HasManySetAssociationsMixin,
+  HasManyHasAssociationsMixin,
+  HasManyCountAssociationsMixin,
+  HasManyRemoveAssociationMixin,
+  HasManyRemoveAssociationsMixin,
 } from 'sequelize';
-import { v4 as uuidv4 } from 'uuid';
 
 import sequelize from '.';
 import File from './File';
@@ -17,27 +22,27 @@ import File from './File';
 class Tag extends Model<InferAttributes<Tag>, InferCreationAttributes<Tag>> {
   // 'CreationOptional' is a special type that marks the field as optional
   // when creating an instance of the model (such as using Model.create()).
-  declare id: CreationOptional<string>;
   declare name: string;
   declare color: string | null;
 
-  declare addParent: HasManyAddAssociationMixin<File, string>;
-  declare getChildren: HasManyGetAssociationsMixin<File>;
+  declare getFiles: HasManyGetAssociationsMixin<File>;
+  declare addFile: HasManyAddAssociationMixin<File, string>;
+  declare addFiles: HasManyAddAssociationsMixin<File, string>;
+  declare setFiles: HasManySetAssociationsMixin<File, string>;
+  declare removeFile: HasManyRemoveAssociationMixin<File, string>;
+  declare removeFiles: HasManyRemoveAssociationsMixin<File, string>;
+  declare hasFile: HasManyHasAssociationMixin<File, string>;
+  declare hasFiles: HasManyHasAssociationsMixin<File, string>;
+  declare countFiles: HasManyCountAssociationsMixin;
 
   declare files?: NonAttribute<File[]>;
 }
 
 Tag.init(
   {
-    id: {
-      type: DataTypes.UUIDV4,
-      primaryKey: true,
-      defaultValue: uuidv4,
-    },
     name: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
+      primaryKey: true,
     },
     color: {
       type: DataTypes.STRING,
