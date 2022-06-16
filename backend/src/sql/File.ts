@@ -7,6 +7,7 @@ import {
   InferCreationAttributes,
   HasManyAddAssociationMixin,
   HasManyAddAssociationsMixin,
+  HasManySetAssociationsMixin,
   HasManyGetAssociationsMixin,
   HasManyRemoveAssociationMixin,
   HasManyRemoveAssociationsMixin,
@@ -18,23 +19,32 @@ import sequelize from '.';
 import Tag from './Tag';
 
 // order of InferAttributes & InferCreationAttributes is important.
-class File extends Model<InferAttributes<File>, InferCreationAttributes<File>> {
+class File extends Model<
+  InferAttributes<File, { omit: 'tags' }>,
+  InferCreationAttributes<File, { omit: 'tags' }>
+> {
   // 'CreationOptional' is a special type that marks the field as optional
   // when creating an instance of the model (such as using Model.create()).
   declare id: string;
   declare path: string;
-  declare parent: ForeignKey<File['id']>;
+  declare parentId: ForeignKey<File['id']>;
   declare type: 'folder' | 'file';
 
-  declare getFiles: HasManyGetAssociationsMixin<File>;
+  declare getChildren: HasManyGetAssociationsMixin<File>;
+  declare addChild: HasManyAddAssociationMixin<File, string>;
+  declare addChildren: HasManyAddAssociationsMixin<File, string>;
+  declare setChildren: HasManySetAssociationsMixin<File, string>;
+  declare removeChild: HasManyRemoveAssociationMixin<File, string>;
+  declare removeChildren: HasManyRemoveAssociationsMixin<File, string>;
+  declare getParent: HasManyGetAssociationsMixin<File>;
 
   declare getTags: HasManyGetAssociationsMixin<Tag>;
-  declare addTag: HasManyAddAssociationMixin<Tag, number>;
-  declare addTags: HasManyAddAssociationsMixin<Tag, number>;
-  declare removeTag: HasManyRemoveAssociationMixin<Tag, number>;
-  declare removeTags: HasManyRemoveAssociationsMixin<Tag, number>;
+  declare addTag: HasManyAddAssociationMixin<Tag, string>;
+  declare addTags: HasManyAddAssociationsMixin<Tag, string>;
+  declare removeTag: HasManyRemoveAssociationMixin<Tag, string>;
+  declare removeTags: HasManyRemoveAssociationsMixin<Tag, string>;
 
-  declare Tags?: NonAttribute<Tag[]>;
+  declare tags?: NonAttribute<Tag[]>;
 
   get fileName(): NonAttribute<string> {
     return fileNameFromPath(this.path);
@@ -63,13 +73,12 @@ File.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    parent: {
-      type: DataTypes.STRING,
-    },
   },
   {
     sequelize,
+    modelName: 'file',
     tableName: 'files',
+    timestamps: false,
   }
 );
 

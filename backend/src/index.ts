@@ -20,32 +20,34 @@ async function main() {
   const app = express();
   await sequelize.sync({ alter: false });
 
-  async function* getFiles(dirPath: string, parentId: string): any {
+  async function* getFiles(dirPath: string, parent?: File): any {
     const dirEntries = await readdir(dirPath, { withFileTypes: true });
     const [file] = await File.findOrCreate({
       where: { path: dirPath },
-      defaults: { id: null, path: dirPath, type: 'folder', parent: parentId },
+      defaults: { id: null, path: dirPath, type: 'folder' },
     });
-    const dirId = file.id;
+    await parent?.addChildren([file]);
 
     for (const dirent of dirEntries) {
       const path = resolve(dirPath, dirent.name);
       if (dirent.isDirectory()) {
-        yield* getFiles(path, dirId);
+        yield* getFiles(path, file);
       } else {
-        yield { path, dirId };
+        yield { path, parent: file };
       }
     }
   }
 
-  for await (const { path, dirId } of getFiles(ROOT_DIR, 'ROOT_DIR')) {
+  for await (const { path, parent } of getFiles(ROOT_DIR)) {
     if (!matchInArray(path, INCLUDED_FILETYPES)) continue;
 
     const hash = await fileHash(path);
-    await File.findOrCreate({
+    const [file] = await File.findOrCreate({
       where: { id: hash },
-      defaults: { id: hash, type: 'file', path, parent: dirId },
+      defaults: { id: hash, type: 'file', path },
     });
+
+    await parent.addChild(file);
   }
 
   app.use('/static', express.static(ROOT_DIR));

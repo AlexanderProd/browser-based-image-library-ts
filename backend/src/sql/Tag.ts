@@ -46,7 +46,9 @@ Tag.init(
   },
   {
     sequelize,
+    modelName: 'tag',
     tableName: 'tags',
+    timestamps: false,
   }
 );
 
