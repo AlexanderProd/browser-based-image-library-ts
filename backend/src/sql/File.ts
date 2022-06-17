@@ -4,6 +4,7 @@ import {
   ForeignKey,
   NonAttribute,
   InferAttributes,
+  CreationOptional,
   InferCreationAttributes,
   HasManyAddAssociationMixin,
   HasManyAddAssociationsMixin,
@@ -12,11 +13,11 @@ import {
   HasManyRemoveAssociationMixin,
   HasManyRemoveAssociationsMixin,
 } from 'sequelize';
-import { fileNameFromPath } from '../utils';
-import { v4 as uuidv4 } from 'uuid';
+import { fileNameFromPath, fileTypeFromPath } from '../utils';
 
 import sequelize from '.';
 import Tag from './Tag';
+import Category from './Category';
 
 // order of InferAttributes & InferCreationAttributes is important.
 class File extends Model<
@@ -25,10 +26,11 @@ class File extends Model<
 > {
   // 'CreationOptional' is a special type that marks the field as optional
   // when creating an instance of the model (such as using Model.create()).
-  declare id: string;
+  declare id: CreationOptional<string>;
   declare path: string;
-  declare parentId: ForeignKey<File['id']>;
   declare type: 'folder' | 'file';
+  declare rating: number | null;
+  declare parentId: ForeignKey<File['id']>;
 
   declare getChildren: HasManyGetAssociationsMixin<File>;
   declare addChild: HasManyAddAssociationMixin<File, string>;
@@ -44,10 +46,20 @@ class File extends Model<
   declare removeTag: HasManyRemoveAssociationMixin<Tag, string>;
   declare removeTags: HasManyRemoveAssociationsMixin<Tag, string>;
 
+  declare getCategories: HasManyGetAssociationsMixin<Category>;
+  declare addCategory: HasManyAddAssociationMixin<Category, string>;
+  declare addCategories: HasManyAddAssociationsMixin<Category, string>;
+  declare removeCategory: HasManyRemoveAssociationMixin<Category, string>;
+  declare removeCategories: HasManyRemoveAssociationsMixin<Category, string>;
+
   declare tags?: NonAttribute<Tag[]>;
 
   get fileName(): NonAttribute<string> {
     return fileNameFromPath(this.path);
+  }
+
+  get fileType(): NonAttribute<string> {
+    return fileTypeFromPath(this.path);
   }
 }
 
@@ -56,13 +68,7 @@ File.init(
     id: {
       type: DataTypes.STRING,
       primaryKey: true,
-      set(value: string) {
-        if (value) {
-          this.setDataValue('id', value);
-        } else {
-          this.setDataValue('id', uuidv4());
-        }
-      },
+      defaultValue: DataTypes.UUIDV4,
     },
     path: {
       type: DataTypes.STRING,
@@ -72,6 +78,11 @@ File.init(
     type: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    rating: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
     },
   },
   {

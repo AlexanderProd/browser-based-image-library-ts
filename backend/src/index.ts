@@ -24,7 +24,7 @@ async function main() {
     const dirEntries = await readdir(dirPath, { withFileTypes: true });
     const [file] = await File.findOrCreate({
       where: { path: dirPath },
-      defaults: { id: null, path: dirPath, type: 'folder' },
+      defaults: { path: dirPath, type: 'folder' },
     });
     await parent?.addChildren([file]);
 

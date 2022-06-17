@@ -13,6 +13,7 @@ import {
   HasManyCountAssociationsMixin,
   HasManyRemoveAssociationMixin,
   HasManyRemoveAssociationsMixin,
+  CreationOptional,
 } from 'sequelize';
 
 import sequelize from '.';
@@ -22,6 +23,7 @@ import File from './File';
 class Tag extends Model<InferAttributes<Tag>, InferCreationAttributes<Tag>> {
   // 'CreationOptional' is a special type that marks the field as optional
   // when creating an instance of the model (such as using Model.create()).
+  declare id: CreationOptional<string>;
   declare name: string;
   declare color: string | null;
 
@@ -40,9 +42,14 @@ class Tag extends Model<InferAttributes<Tag>, InferCreationAttributes<Tag>> {
 
 Tag.init(
   {
+    id: {
+      type: DataTypes.UUIDV4,
+      primaryKey: true,
+      defaultValue: DataTypes.UUIDV4,
+    },
     name: {
       type: DataTypes.STRING,
-      primaryKey: true,
+      allowNull: false,
     },
     color: {
       type: DataTypes.STRING,
